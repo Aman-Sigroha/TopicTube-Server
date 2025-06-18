@@ -12,9 +12,9 @@ const app = express();
 // const prisma = new PrismaClient();
 
 const isProd = process.env.NODE_ENV === 'production';
-const allowedOrigin = isProd ? 'https://yourfrontend.com' : '*';
+const allowedOrigin = process.env.CORS_ORIGIN || (isProd ? 'https://topic-tube.vercel.app' : '*');
 
-app.use(cors({ origin: allowedOrigin }));
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());

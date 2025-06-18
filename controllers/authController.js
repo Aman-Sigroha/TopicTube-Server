@@ -34,13 +34,13 @@ exports.register = async (req, res) => {
   }
   try {
     const { email, password } = req.body;
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.account.findUnique({ where: { email } });
     if (existing) {
       return res.status(409).json({ error: 'User already exists.' });
     }
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
     const refreshToken = generateRefreshToken();
-    const user = await prisma.user.create({
+    const user = await prisma.account.create({
       data: { email, password: hash, refreshToken },
     });
     setRefreshTokenCookie(res, refreshToken);
@@ -59,7 +59,7 @@ exports.login = async (req, res) => {
   }
   try {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.account.findUnique({ where: { email } });
     if (!user || !user.password) {
       return res.status(401).json({ error: 'Invalid credentials.' });
     }
@@ -76,7 +76,7 @@ exports.login = async (req, res) => {
         lockUntil = new Date(Date.now() + LOCK_TIME_MINUTES * 60 * 1000);
         failedAttempts = 0; // reset after lock
       }
-      await prisma.user.update({
+      await prisma.account.update({
         where: { id: user.id },
         data: { failedAttempts, lockUntil },
       });
@@ -84,7 +84,7 @@ exports.login = async (req, res) => {
     }
     // Reset failedAttempts and lockUntil on success
     const refreshToken = generateRefreshToken();
-    await prisma.user.update({
+    await prisma.account.update({
       where: { id: user.id },
       data: { failedAttempts: 0, lockUntil: null, refreshToken },
     });
@@ -100,7 +100,7 @@ exports.refresh = async (req, res) => {
   try {
     const token = req.cookies[REFRESH_TOKEN_COOKIE];
     if (!token) return res.status(401).json({ error: 'No refresh token.' });
-    const user = await prisma.user.findFirst({ where: { refreshToken: token } });
+    const user = await prisma.account.findFirst({ where: { refreshToken: token } });
     if (!user) return res.status(401).json({ error: 'Invalid refresh token.' });
     // Issue new access token
     const accessToken = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
@@ -114,7 +114,7 @@ exports.logout = async (req, res) => {
   try {
     const token = req.cookies[REFRESH_TOKEN_COOKIE];
     if (token) {
-      await prisma.user.updateMany({ where: { refreshToken: token }, data: { refreshToken: null } });
+      await prisma.account.updateMany({ where: { refreshToken: token }, data: { refreshToken: null } });
     }
     res.clearCookie(REFRESH_TOKEN_COOKIE, { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
     res.json({ message: 'Logged out.' });

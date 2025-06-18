@@ -4,8 +4,8 @@ const prisma = new PrismaClient();
 
 exports.getPreferences = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const pref = await prisma.preference.findFirst({ where: { userId } });
+    const accountId = req.user.userId;
+    const pref = await prisma.preference.findFirst({ where: { accountId } });
     if (!pref) return res.json({ topics: [], languages: [] });
     res.json({ topics: pref.topics, languages: pref.languages });
   } catch (err) {
@@ -15,12 +15,12 @@ exports.getPreferences = async (req, res) => {
 
 exports.savePreferences = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const accountId = req.user.userId;
     const { topics, languages } = req.body;
     if (!Array.isArray(topics) || !Array.isArray(languages)) {
       return res.status(400).json({ error: 'Topics and languages must be arrays.' });
     }
-    let pref = await prisma.preference.findFirst({ where: { userId } });
+    let pref = await prisma.preference.findFirst({ where: { accountId } });
     if (pref) {
       pref = await prisma.preference.update({
         where: { id: pref.id },
@@ -28,7 +28,7 @@ exports.savePreferences = async (req, res) => {
       });
     } else {
       pref = await prisma.preference.create({
-        data: { userId, topics, languages },
+        data: { accountId, topics, languages },
       });
     }
     res.json({ topics: pref.topics, languages: pref.languages });

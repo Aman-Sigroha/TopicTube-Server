@@ -14,31 +14,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  googleId  String?  @unique
-  password  String?
-  refreshToken String?
-  failedAttempts Int @default(0)
-  lockUntil DateTime?
-  preferences Preference[]
-  progresses Progress[]
+model Account {
+  id             Int          @id @default(autoincrement())
+  email          String       @unique
+  googleId       String?      @unique
+  password       String?
+  refreshToken   String?
+  failedAttempts Int          @default(0)
+  lockUntil      DateTime?
+  preferences    Preference[]
+  progresses     Progress[]
 }
 
 model Preference {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  topics    String[]
-  languages String[]
+  id         Int      @id @default(autoincrement())
+  account    Account  @relation(fields: [accountId], references: [id])
+  accountId  Int
+  topics     String[]
+  languages  String[]
 }
 
 model Progress {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  topic     String
-  videoId   String
-  status    String // e.g., 'watched', 'liked'
+  id         Int      @id @default(autoincrement())
+  account    Account  @relation(fields: [accountId], references: [id])
+  accountId  Int
+  topic      String
+  videoId    String
+  status     String // e.g., 'watched', 'liked'
 }
