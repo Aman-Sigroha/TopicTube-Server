@@ -5,6 +5,8 @@ const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 const { validationResult } = require('express-validator');
 const prisma = new PrismaClient();
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 const SALT_ROUNDS = 10;
@@ -120,5 +122,44 @@ exports.logout = async (req, res) => {
     res.json({ message: 'Logged out.' });
   } catch (err) {
     res.status(500).json({ error: 'Logout failed.' });
+  }
+};
+
+exports.googleLogin = async (req, res) => {
+  const { idToken } = req.body;
+  try {
+    // Verify Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, sub: googleId } = payload;
+
+    // Find or create user
+    let user = await prisma.account.findUnique({ where: { email } });
+    if (!user) {
+      user = await prisma.account.create({
+        data: { email, googleId },
+      });
+    } else if (!user.googleId) {
+      // Link Google ID if not already linked
+      user = await prisma.account.update({
+        where: { id: user.id },
+        data: { googleId },
+      });
+    }
+
+    // Issue tokens
+    const refreshToken = generateRefreshToken();
+    await prisma.account.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
+    setRefreshTokenCookie(res, refreshToken);
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
+    res.json({ token, user: { id: user.id, email: user.email } });
+  } catch (err) {
+    res.status(401).json({ error: 'Google login failed.' });
   }
 }; 

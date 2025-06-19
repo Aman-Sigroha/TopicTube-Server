@@ -34,4 +34,7 @@ router.post('/refresh', authController.refresh);
 // Logout
 router.post('/logout', authController.logout);
 
+// Google login
+router.post('/google', authController.googleLogin);
+
 module.exports = router; 
