@@ -23,6 +23,10 @@ model Account {
   lockUntil      DateTime?
   preferences    Preference[]
   progresses     Progress[]
+  youtubeAccessToken  String?
+  youtubeRefreshToken String?
+  youtubeTokenExpiry  DateTime?
+  youtubeScope        String?
 }
 
 model Preference {
