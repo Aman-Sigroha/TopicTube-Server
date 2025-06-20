@@ -23,7 +23,7 @@ function setRefreshTokenCookie(res, token) {
   res.cookie(REFRESH_TOKEN_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'none',
     maxAge: REFRESH_TOKEN_EXPIRY,
   });
 }
